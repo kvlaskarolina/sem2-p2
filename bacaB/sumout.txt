@@ -1,0 +1,176 @@
+// Karolina Kulas
+#include <cstdarg>
+#include <string>
+using namespace std;
+int ss1(string a, string b) {
+  if (a.empty() && b.empty())
+    return 0;
+  if (a.size() > b.size())
+    return 1;
+  if (a.size() < b.size())
+    return -1;
+  if (a[0] > b[0])
+    return 1;
+  if (a[0] < b[0])
+    return -1;
+  return ss1(a.substr(1), b.substr(1));
+}
+string duSum(string a, string b, int carry) {
+  if (a.empty()) {
+    char m = (carry + '0');
+    return string(1, m);
+  }
+  if (b.empty()) {
+    char lastCharA = a[a.size() - 1];
+    int lastDigitA = lastCharA - '0';
+    int sum = lastDigitA + carry;
+    if (sum > 10) {
+      sum %= 10;
+      carry = 1;
+    } else
+      carry = 0;
+    a = a.substr(0, a.size() - 1);
+    char summ = sum + '0';
+    return duSum(a, b, carry) + summ;
+  }
+  char lastCharA = a[a.size() - 1];
+  char lastCharB = b[b.size() - 1];
+  int lastDigitA = lastCharA - '0';
+  int lastDigitB = lastCharB - '0';
+  int sum = lastDigitA + lastDigitB + carry;
+  carry = sum / 10;
+  sum %= 10;
+  a = a.substr(0, a.size() - 1);
+  b = b.substr(0, b.size() - 1);
+  char summ = sum + '0';
+  return duSum(a, b, carry) + summ;
+}
+string doMult(string a, char b, int carry) {
+  if (b == '0')
+    return 0;
+  if (a.empty()) {
+    if (carry == 0)
+      return "";
+    int sum = carry;
+    carry = sum / 10;
+    sum %= 10;
+    char summ = sum + '0';
+    return doMult(a, b, carry) + summ;
+  }
+  char xx = a[a.size() - 1];
+  int x = xx - '0';
+  int y = b - '0';
+  int sum = x * y + carry;
+  carry = sum / 10;
+  sum %= 10;
+  a = a.substr(0, a.size() - 1);
+  char summ = sum + '0';
+  return doMult(a, b, carry) + summ;
+}
+void q(string a, string b, int n, int idx, string *array) {
+  if (idx == n)
+    return;
+  array[idx] = doMult(a, b[n - idx - 1], 0) + string(idx, '0');
+  b = b.substr(0, b.size() - 1);
+  q(a, b, n, idx + 1, array);
+}
+string doNormall(string s) {
+  if (s.size() == 0)
+    return "0";
+  if (s[0] == '0' || s[0] == '-' || s[0] == '+')
+    return doNormall(s.substr(1));
+  return s;
+}
+string pp(string a, string b) {
+  if (a.empty())
+    return "0";
+  if (b.empty())
+    return "0";
+
+  if (ss1(a, b) == -1) {
+    string temp = a;
+    a = b;
+    b = temp;
+  }
+  return duSum(a, b, 0);
+}
+string SomNext(int n, const string *s, string x) {
+  if (n == 0)
+    return x;
+  string y = *s;
+  y = doNormall(y);
+  x = doNormall(x);
+  x = pp(x, y);
+  return SomNext(n - 1, (s + 1), x);
+}
+string Som(int n, const string *s) {
+  string a = *s;
+  string x = SomNext(n - 1, (s + 1), a);
+  bool x_neg = (x[0] == '-');
+  x = doNormall(x);
+  if (x[0] == '0')
+    return x;
+  return (x_neg ? "-" : "") + x;
+}
+void makeArrr(string *arr, int n, va_list arg) {
+  if (n == 0)
+    return;
+  arr[0] = va_arg(arg, const char *);
+  makeArrr(arr + 1, n - 1, arg);
+}
+string MultNext(int n, int &sign, const string *s, string x) {
+  if (n == 0)
+    return x;
+  string y = *s;
+  if (y[0] == '-')
+    sign++;
+  sign %= 2;
+  x = doNormall(x);
+  y = doNormall(y);
+  if (x == "0" || y == "0")
+    return "0";
+  string arr[y.size()];
+  int tab_size = y.size();
+  q(x, y, y.size(), 0, arr);
+  x = Som(tab_size, arr);
+  return MultNext(n - 1, sign, (s + 1), x);
+}
+
+string Mult(int n, const string *s) {
+  string a = *s;
+  int sign = 0;
+  if (a[0] == '-')
+    sign++;
+  string x = MultNext(n - 1, sign, (s + 1), a);
+  x = doNormall(x);
+  if (x[0] == '0')
+    return x;
+  return ((sign % 2 == 1) ? "-" : "") + x;
+}
+
+string Mult(int n, ...) {
+  string arr[n];
+  va_list arguments;
+  va_start(arguments, n);
+  makeArrr(arr, n, arguments);
+  va_end(arguments);
+  return Mult(n, arr);
+}
+void Mult(string *x, int n, const string *s) { *x = Mult(n, s); }
+void Mult(string *x, int n, ...) {
+  string arr[n];
+  va_list arguments;
+  va_start(arguments, n);
+  makeArrr(arr, n, arguments);
+  va_end(arguments);
+  *x = Mult(n, arr);
+}
+void Mult(string &x, int n, const string *s) { x = Mult(n, s); }
+void Mult(string &x, int n, ...) {
+  string arr[n];
+  va_list arguments;
+  va_start(arguments, n);
+  makeArrr(arr, n, arguments);
+  va_end(arguments);
+  x = Mult(n, arr);
+}
